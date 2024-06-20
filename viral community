@@ -1,0 +1,31 @@
+Sequence quality control
+#load the necessary modules
+module load trimGaore/0.6.6
+module load fastQC/0.11.8
+module load Cutadapt version: 1.18
+# trimming sequence
+trim_galore -o ./ -q 30 --phred33 --length 35 --paired --retain_unpaired --fastqc ./files
+#sequence assembly
+module load SPAdes
+metaspades.py -1 R1.trimmed.fq -2 R2.trimmed.fq -s unpaired.fq -o ./ -m 200
+#DIAMOND+MEGAN
+#Download DIAMOND 
+wget https://github.com/bbuchfink/diamond/releases/tag/v2.1.9
+#Download NCBI Viral Reference Sequence (RefSeq) database 
+wget ftp://ftp.ncbi.nih.gov/refseq/release/viral in September 2014
+#Build the DIAMOND index, as follows:
+diamond makedb --in nr.gz --db nr
+#Run DIAMOND (DIAMOND only accepts single file, so use cat commend to combine the forward and reverse files first, cat _1.fastq.gz and _2.fastq.gz > _merged.fastq.gz)
+diamond blastx -d nr -q SRR7828855_merged.fastq -o SRR7828855_merged.daa -f 100 (for short reads)
+diamond blastx -q consensus.fasta -d nr.dmnd -o SRR8305972_unicycler.daa -F 15 -f 100 --range-culling --top 10 -p (threads) (For long assembly reads)
+
+Download MEGAN and database 
+MEGAN: wget http://megan.husonlab.org
+DATABASE: wget https://software-ab.informatik.uni-tuebingen.de/download/megan6. The current version is megan-map-Feb2022.db
+#Install MEGAN
+sh _MEGAN.sh
+#Run MEGAN
+/SEAS/home/g43512169/megan/tools/daa-meganizer -i HST-DNA_merged.daa -mdb  megan-map-Feb2022-ue.db
+daa-meganizer -i SRR8305972_unicycler.daa -mdb megan-map-Jan2021.db --longReads
+
+
